@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Xác minh Mã số thuế | masothue.com</title>
+  <meta name="description"
+    content="Công cụ kiểm tra tính hợp lệ của mã số thuế qua danh sách Excel hoặc tra cứu đơn lẻ trên masothue.com" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230f172a'><path d='M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z'/></svg>" />
+</head>
+
+<body>
+  <div class="app">
+
+    <!-- Header -->
+    <header class="header">
+      <div class="container">
+        <div class="header-inner">
+          <div class="header-brand">
+            <div class="header-icon">MST</div>
+            <div>
+              <div class="header-title">Hệ thống Xác minh Mã số thuế</div>
+              <div class="header-subtitle">Tra cứu tự động qua masothue.com</div>
+            </div>
+          </div>
+          <div>
+            <a href="/api/sample-template" class="btn-link" download id="btnDownloadSample">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              Tải file mẫu Excel
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Body -->
+    <main class="main">
+      <div class="container">
+
+        <!-- ============================================================
+             VIEW 1: UPLOAD & INPUT (EXCEL OR SINGLE MST)
+        ============================================================ -->
+        <section id="viewUpload" class="page active">
+          <div class="hero">
+            <h1>Xác minh Mã số thuế</h1>
+            <p>Kiểm tra tính hợp lệ của mã số thuế qua danh sách Excel hoặc tra cứu trực tiếp theo từng mã.</p>
+          </div>
+
+          <!-- Mode Switcher Tabs -->
+          <div class="mode-tabs">
+            <button type="button" id="tabModeExcel" class="mode-tab active">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="12" y1="18" x2="12" y2="12" />
+              </svg>
+              Kiểm tra theo file Excel
+            </button>
+            <button type="button" id="tabModeSingle" class="mode-tab">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              Kiểm tra 1 mã số thuế
+            </button>
+          </div>
+
+          <!-- MODE 1: EXCEL BATCH UPLOAD -->
+          <div id="modeExcelWrap" class="card">
+            <div id="dropZone" class="drop-zone" role="button" tabindex="0">
+              <div class="drop-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="12" y1="18" x2="12" y2="12" />
+                  <line x1="9" y1="15" x2="12" y2="12" />
+                  <line x1="15" y1="15" x2="12" y2="12" />
+                </svg>
+              </div>
+              <div class="drop-title">Kéo & thả file dữ liệu vào đây</div>
+              <div class="drop-sub">hoặc <strong>nhấp để duyệt file từ máy tính</strong></div>
+              <div class="drop-hints">
+                <span class="drop-hint-tag">.XLSX</span>
+                <span class="drop-hint-tag">.XLS</span>
+                <span class="drop-hint-tag">.CSV</span>
+                <span>• Tối đa 20MB (20.000 dòng)</span>
+              </div>
+            </div>
+            <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" />
+
+            <div class="sample-bar">
+              <span>Chưa có file đúng định dạng?</span>
+              <a href="/api/sample-template" class="sample-link" download>Tải file mẫu chuẩn (.xlsx)</a>
+            </div>
+
+            <div id="uploadError" class="alert alert-error mt-16 hidden" role="alert"></div>
+          </div>
+
+          <!-- MODE 2: SINGLE TAX ID LOOKUP -->
+          <div id="modeSingleWrap" class="card hidden">
+            <form id="singleVerifyForm">
+              <div class="single-form">
+                <div class="form-group">
+                  <label for="inputSingleTaxId">Mã số thuế (*)</label>
+                  <input type="text" id="inputSingleTaxId" placeholder="" required autocomplete="off" />
+                </div>
+                <div class="form-group">
+                  <label for="inputSingleName">Họ và tên (Tuỳ chọn)</label>
+                  <input type="text" id="inputSingleName" placeholder="" autocomplete="off" />
+                </div>
+              </div>
+
+              <div class="flex justify-between items-center">
+                <span style="font-size: 12px; color: var(--text-light);">
+                  Hệ thống sẽ tra cứu trực tiếp qua backend proxy masothue.com.
+                </span>
+                <button type="submit" id="btnSingleSubmit" class="btn btn-primary btn-lg">
+                  Kiểm tra mã số thuế
+                </button>
+              </div>
+            </form>
+
+            <!-- Single Result Card (Injected upon verification) -->
+            <div id="singleResultCard" class="single-result-card hidden">
+              <div class="flex justify-between items-center">
+                <div style="font-size: 14px; font-weight: 600; color: var(--text-main);">
+                  Kết quả xác minh:
+                </div>
+                <div id="singleResultPill"></div>
+              </div>
+
+              <div class="single-result-grid">
+                <div class="single-result-item">
+                  <span class="single-result-label">Mã số thuế</span>
+                  <span class="single-result-val" id="resSingleTaxId">—</span>
+                </div>
+                <div class="single-result-item">
+                  <span class="single-result-label">Họ và tên</span>
+                  <span class="single-result-val" id="resSingleName">—</span>
+                </div>
+                <div class="single-result-item">
+                  <span class="single-result-label">URL tra cứu</span>
+                  <span class="single-result-val" id="resSingleLookupUrl">—</span>
+                </div>
+                <div class="single-result-item">
+                  <span class="single-result-label">URL phản hồi</span>
+                  <span class="single-result-val" id="resSingleFinalUrl">—</span>
+                </div>
+                <div class="single-result-item">
+                  <span class="single-result-label">Mã phản hồi HTTP</span>
+                  <span class="single-result-val" id="resSingleHttp">—</span>
+                </div>
+                <div class="single-result-item">
+                  <span class="single-result-label">Ghi chú giải thích</span>
+                  <span class="single-result-val" id="resSingleMessage"
+                    style="font-weight: 500; color: var(--text-muted);">—</span>
+                </div>
+              </div>
+
+              <div class="mt-16 flex justify-between items-center"
+                style="border-top: 1px solid var(--border); padding-top: 14px;">
+                <span style="font-size: 12px; color: var(--text-light);" id="resSingleCheckedAt">—</span>
+                <button type="button" id="btnSingleClear" class="btn btn-secondary">Tra cứu mã khác</button>
+              </div>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ============================================================
+             VIEW 2: FILE READY (NO ROW PREVIEW LIST)
+        ============================================================ -->
+        <section id="viewReady" class="page">
+          <div class="hero">
+            <h1>Xác nhận thông tin tập tin</h1>
+            <p>Kiểm tra cấu trúc cột trước khi tiến hành xác minh tự động.</p>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Thông tin tập tin đã tải lên</div>
+              <button id="btnCancelFile" class="btn btn-secondary">Chọn file khác</button>
+            </div>
+
+            <div class="file-ready-box">
+              <div class="file-meta-row">
+                <div class="file-meta-item">
+                  <span class="file-meta-label">Tên tập tin</span>
+                  <span class="file-meta-value" id="metaFilename">—</span>
+                </div>
+                <div class="file-meta-item">
+                  <span class="file-meta-label">Dung lượng</span>
+                  <span class="file-meta-value" id="metaSize">—</span>
+                </div>
+                <div class="file-meta-item">
+                  <span class="file-meta-label">Tổng số dòng</span>
+                  <span class="file-meta-value" id="metaTotalRows">—</span>
+                </div>
+                <div class="file-meta-item">
+                  <span class="file-meta-label">Cột Họ tên</span>
+                  <span class="file-meta-value" id="metaNameCol">—</span>
+                </div>
+                <div class="file-meta-item">
+                  <span class="file-meta-label">Cột Mã số thuế</span>
+                  <span class="file-meta-value" id="metaTaxCol">—</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Manual mapping (shown if detection failed or optional) -->
+            <div id="mappingSection" class="mapping-panel hidden">
+              <div style="font-size: 13px; font-weight: 600; color: var(--text-main);">Tuỳ chỉnh ánh xạ cột:</div>
+              <div class="mapping-grid">
+                <div class="mapping-field">
+                  <label for="selectNameCol">Cột chứa Họ tên</label>
+                  <select id="selectNameCol"></select>
+                </div>
+                <div class="mapping-field">
+                  <label for="selectTaxCol">Cột chứa Mã số thuế</label>
+                  <select id="selectTaxCol"></select>
+                </div>
+              </div>
+              <div class="mt-16">
+                <button id="btnApplyMapping" class="btn btn-secondary">Cập nhật ánh xạ</button>
+              </div>
+            </div>
+
+            <div class="flex justify-between items-center mt-24">
+              <div style="font-size: 13px; color: var(--text-light);">
+                Hệ thống sẽ kiểm tra lần lượt và hiển thị toàn bộ kết quả khi hoàn tất.
+              </div>
+              <button id="btnStartVerify" class="btn btn-primary btn-lg">
+                Bắt đầu xác minh
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================
+             VIEW 3: PROGRESS & REAL-TIME VERIFICATION
+        ============================================================ -->
+        <section id="viewProgress" class="page">
+          <div class="hero">
+            <h1>Đang tiến hành xác minh...</h1>
+            <p>Hệ thống đang truy vấn và kiểm tra dữ liệu qua masothue.com.</p>
+          </div>
+
+          <div class="card progress-container">
+            <div class="progress-header">
+              <div class="progress-status-text">
+                <div class="spinner" id="progressSpinner"></div>
+                <span id="progressStatusLabel">Đang xử lý dữ liệu...</span>
+              </div>
+              <div class="progress-fraction">
+                <strong id="progDone">0</strong> / <span id="progTotal">0</span> (<span id="progPercent">0%</span>)
+              </div>
+            </div>
+
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" id="progressBarFill"></div>
+            </div>
+
+            <div class="stats-row">
+              <div class="stat-box valid">
+                <div class="stat-box-label">Hợp lệ (Valid)</div>
+                <div class="stat-box-val" id="statValid">0</div>
+              </div>
+              <div class="stat-box invalid">
+                <div class="stat-box-label">Không hợp lệ</div>
+                <div class="stat-box-val" id="statInvalid">0</div>
+              </div>
+              <div class="stat-box timeout">
+                <div class="stat-box-label">Timeout</div>
+                <div class="stat-box-val" id="statTimeout">0</div>
+              </div>
+              <div class="stat-box rate">
+                <div class="stat-box-label">Bị giới hạn (Rate)</div>
+                <div class="stat-box-val" id="statRate">0</div>
+              </div>
+              <div class="stat-box error">
+                <div class="stat-box-label">Lỗi hệ thống</div>
+                <div class="stat-box-val" id="statError">0</div>
+              </div>
+            </div>
+
+            <div class="flex justify-between items-center mt-24">
+              <span style="font-size: 12px; color: var(--text-light);">
+                Quá trình kiểm tra phụ thuộc vào số lượng dòng và tốc độ phản hồi của trang web.
+              </span>
+              <button id="btnStopVerify" class="btn btn-danger">Dừng kiểm tra</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================
+             VIEW 4: RESULTS (DISPLAYED ONLY WHEN COMPLETE)
+        ============================================================ -->
+        <section id="viewResults" class="page">
+          <!-- Top bar with button to start new check right at the top -->
+          <div class="results-top-bar">
+            <div>
+              <h1>Kết quả xác minh mã số thuế</h1>
+              <p id="resultHeroSub">Hoàn thành quá trình kiểm tra.</p>
+            </div>
+            <button id="btnNewCheckTop" class="btn btn-secondary">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 12H5M12 19l-7-7 7-7" />
+              </svg>
+              Kiểm tra danh sách khác
+            </button>
+          </div>
+
+          <!-- Summary card -->
+          <div class="card">
+            <div class="stats-row" style="margin-top: 0;">
+              <div class="stat-box valid">
+                <div class="stat-box-label">Hợp lệ</div>
+                <div class="stat-box-val" id="resSummaryValid">0</div>
+              </div>
+              <div class="stat-box invalid">
+                <div class="stat-box-label">Không hợp lệ</div>
+                <div class="stat-box-val" id="resSummaryInvalid">0</div>
+              </div>
+              <div class="stat-box timeout">
+                <div class="stat-box-label">Timeout</div>
+                <div class="stat-box-val" id="resSummaryTimeout">0</div>
+              </div>
+              <div class="stat-box rate">
+                <div class="stat-box-label">Bị giới hạn</div>
+                <div class="stat-box-val" id="resSummaryRate">0</div>
+              </div>
+              <div class="stat-box error">
+                <div class="stat-box-label">Lỗi khác</div>
+                <div class="stat-box-val" id="resSummaryError">0</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Results table card -->
+          <div class="card">
+            <div class="toolbar">
+              <div class="filter-group" id="resultFilterGroup">
+                <button class="filter-btn active" data-filter="ALL">Tất cả (<span id="cntAll">0</span>)</button>
+                <button class="filter-btn" data-filter="VALID">Hợp lệ (<span id="cntValid">0</span>)</button>
+                <button class="filter-btn" data-filter="INVALID">Không hợp lệ (<span id="cntInvalid">0</span>)</button>
+                <button class="filter-btn" data-filter="TIMEOUT">Timeout (<span id="cntTimeout">0</span>)</button>
+                <button class="filter-btn" data-filter="RATE_LIMITED">Giới hạn (<span id="cntRate">0</span>)</button>
+                <button class="filter-btn" data-filter="API_ERROR">Lỗi (<span id="cntError">0</span>)</button>
+              </div>
+
+              <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Tìm theo tên hoặc MST..." />
+              </div>
+            </div>
+
+            <div class="table-container">
+              <table id="resultsTable">
+                <thead>
+                  <tr>
+                    <th style="width: 50px;">STT</th>
+                    <th>Họ tên</th>
+                    <th>Mã số thuế</th>
+                    <th>URL tra cứu</th>
+                    <th>URL phản hồi</th>
+                    <th style="width: 70px;">HTTP</th>
+                    <th>Kết quả</th>
+                    <th>Ghi chú</th>
+                  </tr>
+                </thead>
+                <tbody id="resultsTableBody">
+                  <!-- Rows injected by JS -->
+                </tbody>
+              </table>
+            </div>
+
+            <div class="pagination" id="paginationWrap">
+              <div id="paginationText">Hiển thị 0 kết quả</div>
+              <div class="pagination-controls" id="paginationBtns"></div>
+            </div>
+
+            <div class="flex justify-between items-center mt-24" style="flex-wrap: wrap; gap: 12px;">
+              <div class="flex gap-8">
+                <button id="btnNewCheck" class="btn btn-secondary">Kiểm tra danh sách khác</button>
+                <button id="btnRetryErrors" class="btn btn-secondary hidden"
+                  style="border-color: #f59e0b; color: #b45309;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+                  </svg>
+                  <span id="btnRetryErrorsText">Kiểm tra lại dòng lỗi (0)</span>
+                </button>
+              </div>
+              <button id="btnExportExcel" class="btn btn-primary btn-lg">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                Tải kết quả Excel (.xlsx)
+              </button>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Scripts -->
+  <script src="js/app.js"></script>
+  <script src="js/upload.js"></script>
+  <script src="js/progress.js"></script>
+  <script src="js/results.js"></script>
+  <script src="js/export.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,24 @@
+{
+  "name": "check-taxcode-masothue",
+  "version": "1.1.0",
+  "description": "MaSoThue Excel Tax ID Verification Web Application",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js",
+    "test": "jest --testPathPattern=backend/tests/ --forceExit"
+  },
+  "dependencies": {
+    "axios": "^1.7.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1",
+    "p-limit": "^3.1.0",
+    "uuid": "^10.0.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.4"
+  }
+}
