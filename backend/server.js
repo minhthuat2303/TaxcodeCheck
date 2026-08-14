@@ -28,33 +28,44 @@ app.use(cors({
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Serve frontend static files
+// Serve static files from frontend and public
 const frontendPath = path.join(__dirname, '..', 'frontend');
+const publicPath = path.join(__dirname, '..', 'public');
 app.use(express.static(frontendPath));
+app.use(express.static(publicPath));
 
-// ——— API Routes ———
-app.use('/api/upload', uploadRouter);
-app.use('/api/verify', verifyRouter);
-app.use('/api/export', exportRouter);
-app.use('/api/sample-template', sampleRouter);
+// ——— API Routes (Support both /api/path and /path on Vercel) ———
+app.use(['/api/upload', '/upload'], uploadRouter);
+app.use(['/api/verify', '/verify'], verifyRouter);
+app.use(['/api/export', '/export'], exportRouter);
+app.use(['/api/sample-template', '/sample-template'], sampleRouter);
 
 // Health check
-app.get('/api/health', (req, res) => {
+const healthHandler = (req, res) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
     config: {
       maxFileSizeMB: process.env.MAX_FILE_SIZE_MB || '20',
       maxRows: process.env.MAX_ROWS || '20000',
-      concurrency: process.env.VERIFY_CONCURRENCY || '5',
+      concurrency: process.env.VERIFY_CONCURRENCY || '2',
       timeoutMs: process.env.REQUEST_TIMEOUT_MS || '10000',
     },
   });
-});
+};
+app.get(['/api/health', '/health'], healthHandler);
 
-// Fallback: serve index.html for any unmatched route (SPA support)
+// Fallback: serve index.html for SPA support
 app.get('*', (req, res) => {
-  res.sendFile(path.join(frontendPath, 'index.html'));
+  const fs = require('fs');
+  const indexInFrontend = path.join(frontendPath, 'index.html');
+  const indexInPublic = path.join(publicPath, 'index.html');
+  if (fs.existsSync(indexInFrontend)) {
+    return res.sendFile(indexInFrontend);
+  } else if (fs.existsSync(indexInPublic)) {
+    return res.sendFile(indexInPublic);
+  }
+  res.status(404).send('Page not found');
 });
 
 // ——— Global error handler ———
@@ -63,11 +74,13 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Lỗi máy chủ nội bộ' });
 });
 
-// ——— Start server ———
-app.listen(PORT, () => {
-  logger.info(`✅ Server running at http://localhost:${PORT}`);
-  logger.info(`   Frontend: http://localhost:${PORT}`);
-  logger.info(`   API:      http://localhost:${PORT}/api`);
-});
+// ——— Start server (only when not running inside Vercel serverless) ———
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    logger.info(`✅ Server running at http://localhost:${PORT}`);
+    logger.info(`   Frontend: http://localhost:${PORT}`);
+    logger.info(`   API:      http://localhost:${PORT}/api`);
+  });
+}
 
-module.exports = app; // for testing
+module.exports = app;
