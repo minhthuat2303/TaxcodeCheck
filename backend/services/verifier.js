@@ -49,7 +49,7 @@ async function verifyUrl(url, taxId) {
   let httpStatus = null;
 
   try {
-    const response = await axios.get(url, {
+    const axiosConfig = {
       timeout: TIMEOUT_MS,
       maxRedirects: 10,           // follow up to 10 redirects
       validateStatus: () => true, // don't throw on any HTTP status
@@ -68,7 +68,25 @@ async function verifyUrl(url, taxId) {
         'Sec-Fetch-User': '?1',
         'Upgrade-Insecure-Requests': '1',
       },
-    });
+    };
+
+    // Optional proxy support if hosted on foreign datacenters (like Vercel)
+    const proxyUrl = process.env.PROXY_URL || process.env.HTTP_PROXY || process.env.HTTPS_PROXY;
+    if (proxyUrl) {
+      try {
+        const parsedProxy = new URL(proxyUrl);
+        axiosConfig.proxy = {
+          protocol: parsedProxy.protocol.replace(':', ''),
+          host: parsedProxy.hostname,
+          port: parseInt(parsedProxy.port, 10) || (parsedProxy.protocol === 'https:' ? 443 : 80),
+          auth: parsedProxy.username ? { username: parsedProxy.username, password: parsedProxy.password } : undefined,
+        };
+      } catch (proxyErr) {
+        logger.log('warn', `[verifier] Invalid PROXY_URL: ${proxyErr.message}`);
+      }
+    }
+
+    const response = await axios.get(url, axiosConfig);
 
     finalUrl = response.request?.res?.responseUrl || response.config?.url || url;
     httpStatus = response.status;
