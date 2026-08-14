@@ -76,10 +76,21 @@ app.use((err, req, res, next) => {
 
 // ——— Start server (only when not running inside Vercel serverless) ———
 if (!process.env.VERCEL) {
-  app.listen(PORT, () => {
-    logger.info(`✅ Server running at http://localhost:${PORT}`);
-    logger.info(`   Frontend: http://localhost:${PORT}`);
-    logger.info(`   API:      http://localhost:${PORT}/api`);
+  const os = require('os');
+  app.listen(PORT, '0.0.0.0', () => {
+    logger.info(`=======================================================`);
+    logger.info(`✅ Hệ thống Xác minh Mã số thuế đang chạy (Mạng nội bộ)`);
+    logger.info(`   👉 Máy tính của bạn:           http://localhost:${PORT}`);
+
+    const nets = os.networkInterfaces();
+    for (const name of Object.keys(nets)) {
+      for (const net of nets[name]) {
+        if (net.family === 'IPv4' && !net.internal && !net.address.startsWith('169.254')) {
+          logger.info(`   👉 Các máy khác trong cùng Wi-Fi/LAN (${name}): http://${net.address}:${PORT}`);
+        }
+      }
+    }
+    logger.info(`=======================================================`);
   });
 }
 
